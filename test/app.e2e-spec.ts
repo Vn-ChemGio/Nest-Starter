@@ -15,10 +15,20 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('/health-check (GET)', async () => {
+    const test = await request(app.getHttpServer())
+      .get('/health-check')
+      .expect(200);
+
+    expect(test.body.status).toBeDefined();
+    expect(['error', 'ok', 'shutting_down']).toContain(test.body.status);
+
+    expect(test.body.info).toBeDefined();
+    expect(test.body.error).toBeDefined();
+    expect(test.body.details).toBeDefined();
   });
 });
