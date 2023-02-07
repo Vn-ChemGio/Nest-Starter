@@ -264,6 +264,61 @@ describe('UserService', () => {
     });
   });
 
+  describe('getUserByRefresh', () => {
+    const sampleData = givenUserDataWithId();
+
+    it('It should return an user if refresh_token & userId is valid in database', async () => {
+      const refreshToken = await bcrypt.hash(
+        sampleData.refreshToken.split('').reverse().join(''),
+        10,
+      );
+
+      const findByIdSpy = jest.spyOn(repository, 'findById').mockResolvedValue({
+        _id: '123',
+        ...sampleData,
+        refreshToken: refreshToken,
+      } as User);
+
+      await service.getUserByRefresh(sampleData.refreshToken, sampleData._id);
+
+      expect(findByIdSpy).toHaveBeenCalled();
+      expect(findByIdSpy).toBeCalledWith(sampleData._id, '-password');
+    });
+
+    it('It should return an error if userId does not exist in database', async () => {
+      const findByIdSpy = jest
+        .spyOn(repository, 'findById')
+        .mockResolvedValue(null);
+
+      await expect(
+        service.getUserByRefresh(sampleData.refreshToken, sampleData._id),
+      ).rejects.toEqual(new UnauthorizedException('Invalid token'));
+
+      expect(findByIdSpy).toHaveBeenCalled();
+      expect(findByIdSpy).toBeCalledWith(sampleData._id, '-password');
+    });
+
+    it('It should return an user if userId exists in database but accessToken is invalid', async () => {
+      const refreshToken = await bcrypt.hash(
+        (sampleData.refreshToken + 'xxx').split('').reverse().join(''),
+        10,
+      );
+
+      const findByIdSpy = jest.spyOn(repository, 'findById').mockResolvedValue({
+        _id: '123',
+        ...sampleData,
+        refreshToken: refreshToken,
+      } as User);
+
+      await expect(
+        service.getUserByRefresh(sampleData.refreshToken, sampleData._id),
+      ).rejects.toEqual(new UnauthorizedException('Invalid credentials'));
+
+      expect(findByIdSpy).toHaveBeenCalled();
+      expect(findByIdSpy).toBeCalledWith(sampleData._id, '-password');
+    });
+  });
+
   describe('update', () => {
     const sampleResponse = {
       acknowledged: true,

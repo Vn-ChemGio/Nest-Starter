@@ -26,6 +26,21 @@ describe('preSaveHook', () => {
     expect(contextMock.set).toBeCalledTimes(1);
   });
 
+  test('should hash when store refreshToken if it include', async () => {
+    const nextMock = jest.fn();
+    const contextMock = {
+      isModified: jest.fn(),
+      set: jest.fn(),
+      refreshToken: 'ANY_refreshToken',
+    };
+    contextMock.isModified.mockReturnValueOnce(false);
+
+    await preSaveHook.call(contextMock, nextMock);
+
+    expect(contextMock.set).toBeCalledTimes(1);
+    expect(nextMock).toBeCalledTimes(1);
+  });
+
   test('should set lowercase email if it include', async () => {
     const nextMock = jest.fn();
     const contextMock = {

@@ -29,12 +29,15 @@ describe('AuthService', () => {
             create: jest.fn(),
             findByLogin: jest.fn(),
             findById: jest.fn(),
+            getUserByRefresh: jest.fn(),
+            updateById: jest.fn(),
           },
         },
         {
           provide: JwtService,
           useValue: {
             sign: jest.fn(),
+            verify: jest.fn(),
           },
         },
       ],
@@ -71,17 +74,40 @@ describe('AuthService', () => {
         .spyOn(jwtService, 'sign')
         .mockImplementation(() => token as never);
 
+      const updateUserSpy = jest
+        .spyOn(userService, 'updateById')
+        .mockResolvedValue({} as any);
+
       const result = await authService.register(sampleData);
 
       expect(creatUserSpy).toBeCalledWith(sampleData);
       expect(creatUserSpy).toBeCalledTimes(1);
 
-      expect(creatTokenSpy).toBeCalledWith({ id: userCreated._id });
-      expect(creatTokenSpy).toBeCalledTimes(1);
+      expect(creatTokenSpy).toBeCalledWith({
+        id: userCreated._id,
+        isSecondFactorAuthenticated: false,
+      });
+
+      expect(creatTokenSpy).toBeCalledWith(
+        { id: userCreated._id },
+        {
+          secret: process.env.SECRETKEY_REFRESH,
+          expiresIn: process.env.EXPIRESIN_REFRESH,
+        },
+      );
+
+      expect(creatTokenSpy).toBeCalledTimes(2);
+
+      expect(updateUserSpy).toBeCalledWith(userCreated._id, {
+        refreshToken: token,
+      });
+      expect(updateUserSpy).toBeCalledTimes(1);
 
       expect(result.email).toBeDefined();
       expect(result.expiresIn).toBeDefined();
       expect(result.accessToken).toEqual(token);
+      expect(result.expiresInRefresh).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
     });
 
     it('it should return an error if has any exception', async () => {
@@ -101,7 +127,11 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    const sampleData = givenUserDataWithId();
+    const sampleData = {
+      _id: '123',
+      email: 'hantsy@example.com',
+      password: 'mysecret',
+    } as User;
 
     const credential: LoginUserDto = {
       credential: 'hantsy@example.com',
@@ -120,17 +150,40 @@ describe('AuthService', () => {
         .spyOn(jwtService, 'sign')
         .mockImplementation(() => token as never);
 
+      const updateUserSpy = jest
+        .spyOn(userService, 'updateById')
+        .mockResolvedValue({} as any);
+
       const result = await authService.login(credential);
 
       expect(findUserSpy).toHaveBeenCalled();
       expect(findUserSpy).toBeCalledWith(credential);
 
-      expect(creatTokenSpy).toHaveBeenCalled();
-      expect(creatTokenSpy).toBeCalledWith({ id: sampleData._id });
+      expect(creatTokenSpy).toBeCalledWith({
+        id: sampleData._id,
+        isSecondFactorAuthenticated: false,
+      });
+
+      expect(creatTokenSpy).toBeCalledWith(
+        { id: sampleData._id },
+        {
+          secret: process.env.SECRETKEY_REFRESH,
+          expiresIn: process.env.EXPIRESIN_REFRESH,
+        },
+      );
+
+      expect(creatTokenSpy).toBeCalledTimes(2);
+
+      expect(updateUserSpy).toBeCalledWith(sampleData._id, {
+        refreshToken: token,
+      });
+      expect(updateUserSpy).toBeCalledTimes(1);
 
       expect(result.email).toBeDefined();
       expect(result.expiresIn).toBeDefined();
       expect(result.accessToken).toEqual(token);
+      expect(result.expiresInRefresh).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
     });
 
     it('it should return an error if has any exception', async () => {
@@ -179,6 +232,144 @@ describe('AuthService', () => {
 
       expect(findByIdSpy).toHaveBeenCalled();
       expect(findByIdSpy).toBeCalledWith(sampleData._id);
+    });
+  });
+
+  describe('refresh', () => {
+    const sampleData = givenUserDataWithId();
+
+    const token = 'any_token';
+    const refreshToken = 'any_refreshToken';
+
+    it('it should return an new access Token without error', async () => {
+      const verifyTokenSpy = jest
+        .spyOn(jwtService, 'verify')
+        .mockImplementation(() => ({
+          id: sampleData._id,
+        }));
+
+      const creatTokenSpy = jest
+        .spyOn(jwtService, 'sign')
+        .mockImplementation(() => token as never);
+
+      const getUserByRefreshSpy = jest
+        .spyOn(userService, 'getUserByRefresh')
+        .mockResolvedValue({
+          ...sampleData,
+        } as User);
+
+      const updateUserSpy = jest
+        .spyOn(userService, 'updateById')
+        .mockResolvedValue({} as any);
+
+      const result = await authService.refresh(refreshToken);
+
+      expect(verifyTokenSpy).toBeCalledWith(refreshToken, {
+        secret: process.env.SECRETKEY_REFRESH,
+      });
+      expect(verifyTokenSpy).toBeCalledTimes(1);
+
+      expect(getUserByRefreshSpy).toBeCalledWith(refreshToken, sampleData._id);
+      expect(getUserByRefreshSpy).toBeCalledTimes(1);
+
+      expect(creatTokenSpy).toBeCalledWith({
+        id: sampleData._id,
+        isSecondFactorAuthenticated: true,
+      });
+      expect(creatTokenSpy).toBeCalledTimes(1);
+
+      expect(updateUserSpy).not.toHaveBeenCalled();
+
+      expect(result.expiresIn).toBeDefined();
+      expect(result.accessToken).toBeDefined();
+    });
+
+    it('it should return an error if token is invalid', async () => {
+      const verifyTokenSpy = jest
+        .spyOn(jwtService, 'verify')
+        .mockImplementation(() => {
+          throw new HttpException('any_error', HttpStatus.UNAUTHORIZED);
+        });
+      const creatTokenSpy = jest
+        .spyOn(jwtService, 'sign')
+        .mockImplementation(() => token as never);
+
+      const getUserByRefreshSpy = jest
+        .spyOn(userService, 'getUserByRefresh')
+        .mockResolvedValue({
+          ...sampleData,
+        } as User);
+
+      const updateUserSpy = jest
+        .spyOn(userService, 'updateById')
+        .mockResolvedValue({} as any);
+
+      await expect(authService.refresh(refreshToken)).rejects.toEqual(
+        new UnauthorizedException('Invalid token'),
+      );
+
+      expect(verifyTokenSpy).toBeCalledWith(refreshToken, {
+        secret: process.env.SECRETKEY_REFRESH,
+      });
+      expect(verifyTokenSpy).toBeCalledTimes(1);
+
+      expect(getUserByRefreshSpy).not.toHaveBeenCalled();
+      expect(creatTokenSpy).not.toHaveBeenCalled();
+      expect(updateUserSpy).not.toHaveBeenCalled();
+    });
+
+    it('it should return an error if getUserByRefresh can not resolved the user', async () => {
+      const verifyTokenSpy = jest
+        .spyOn(jwtService, 'verify')
+        .mockImplementation(() => ({
+          id: sampleData._id,
+        }));
+
+      const creatTokenSpy = jest
+        .spyOn(jwtService, 'sign')
+        .mockImplementation(() => token as never);
+
+      const getUserByRefreshSpy = jest
+        .spyOn(userService, 'getUserByRefresh')
+        .mockImplementation(() => {
+          throw new HttpException('any_error', HttpStatus.UNAUTHORIZED);
+        });
+
+      const updateUserSpy = jest
+        .spyOn(userService, 'updateById')
+        .mockResolvedValue({} as any);
+
+      await expect(authService.refresh(refreshToken)).rejects.toEqual(
+        new UnauthorizedException('Invalid token'),
+      );
+
+      expect(verifyTokenSpy).toBeCalledWith(refreshToken, {
+        secret: process.env.SECRETKEY_REFRESH,
+      });
+      expect(verifyTokenSpy).toBeCalledTimes(1);
+
+      expect(getUserByRefreshSpy).toBeCalledWith(refreshToken, sampleData._id);
+      expect(getUserByRefreshSpy).toBeCalledTimes(1);
+
+      expect(creatTokenSpy).not.toHaveBeenCalled();
+      expect(updateUserSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('logout', () => {
+    const sampleData = givenUserDataWithId();
+
+    it('it should complete without error', async () => {
+      const updateUserSpy = jest
+        .spyOn(userService, 'updateById')
+        .mockResolvedValue({} as any);
+
+      await authService.logout(sampleData);
+
+      expect(updateUserSpy).toBeCalledWith(sampleData._id, {
+        refreshToken: null,
+      });
+      expect(updateUserSpy).toBeCalledTimes(1);
     });
   });
 });
