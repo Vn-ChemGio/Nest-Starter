@@ -69,6 +69,23 @@ export class UserService {
     return user;
   }
 
+  async getUserByRefresh(refreshToken: string, id: string) {
+    const user = await this.userRepository.findById(id, '-password');
+    if (!user) {
+      throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
+    }
+    const is_equal = await bcrypt.compare(
+      this.reverse(refreshToken),
+      user.refreshToken,
+    );
+
+    if (!is_equal) {
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+    }
+
+    return user;
+  }
+
   update(
     filter: FilterQuery<User>,
     update: UpdateQuery<User>,
@@ -83,5 +100,9 @@ export class UserService {
 
   removeById(id: string) {
     return this.userRepository.deleteOne(id);
+  }
+
+  reverse(s) {
+    return s.split('').reverse().join('');
   }
 }

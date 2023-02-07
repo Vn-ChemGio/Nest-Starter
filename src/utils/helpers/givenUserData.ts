@@ -6,6 +6,7 @@ export const givenUserData = (data?: Partial<User>) =>
       username: 'hantsy',
       email: 'hantsy@example.com',
       password: 'mysecret',
+      refreshToken: 'Any_refreshToken',
     },
     data,
   ) as User;

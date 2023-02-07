@@ -4,6 +4,7 @@ import {
   Model,
   ProjectionType,
   QueryOptions,
+  UpdateQuery,
 } from 'mongoose';
 
 export class BaseRepository<T extends Document> {
@@ -72,7 +73,7 @@ export class BaseRepository<T extends Document> {
     return this.model.updateMany(filter, update, option, callback);
   }
 
-  async findByIdAndUpdate(id, update) {
+  async findByIdAndUpdate(id?: any, update?: UpdateQuery<T>) {
     return this.model.findByIdAndUpdate(id, update);
   }
 }

@@ -6,6 +6,7 @@ const UserSchema = new Schema(
     username: String,
     email: String,
     password: String,
+    refreshToken: String,
     firstName: String,
     lastName: String,
   },
@@ -23,6 +24,7 @@ export interface User extends Document {
   username: string;
   email: string;
   password: string;
+  refreshToken: string;
   firstName: string;
   lastName: string;
 }
