@@ -1,11 +1,12 @@
 import { ConfigModule } from '@nestjs/config';
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserController } from './controllers';
 import { UserSchema } from './entities';
 import { UserRepository } from './repositories';
 import { UserService } from './services';
 
+@Global()
 @Module({
   imports: [
     ConfigModule.forRoot(),

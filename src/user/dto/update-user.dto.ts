@@ -1,7 +1,7 @@
 import { PartialType } from '@nestjs/mapped-types';
+import { IsEqualTo } from '@utils/decorators';
 import { IsNotEmpty } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { IsEqualTo } from '../../utils/decorators';
 
 import { CreateUserDto } from './create-user.dto';
 

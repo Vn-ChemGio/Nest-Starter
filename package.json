@@ -26,14 +26,18 @@
     "@nestjs/common": "^9.3.3",
     "@nestjs/config": "^2.3.0",
     "@nestjs/core": "^9.3.3",
+    "@nestjs/jwt": "^10.0.1",
     "@nestjs/mapped-types": "*",
     "@nestjs/mongoose": "^9.2.1",
+    "@nestjs/passport": "^9.0.1",
     "@nestjs/platform-fastify": "^9.3.3",
     "@nestjs/terminus": "^9.2.0",
     "bcrypt": "^5.1.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "mongoose": "^6.9.0",
+    "passport": "^0.6.0",
+    "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.0"
   },
@@ -44,6 +48,7 @@
     "@types/express": "^4.17.17",
     "@types/jest": "29.4.0",
     "@types/node": "18.11.19",
+    "@types/passport-jwt": "^3.0.8",
     "@types/supertest": "^2.0.12",
     "@typescript-eslint/eslint-plugin": "^5.51.0",
     "@typescript-eslint/parser": "^5.51.0",
@@ -66,7 +71,7 @@
       "json",
       "ts"
     ],
-    "rootDir": "src",
+    "rootDir": "./",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
@@ -75,6 +80,22 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@auth(.*)$": [
+        "<rootDir>/src/auth$1"
+      ],
+      "^@user(.*)$": [
+        "<rootDir>/src/user$1"
+      ],
+      "^@util(.*)$": [
+        "<rootDir>/src/util$1"
+      ]
+    },
+    "_moduleAliases": {
+      "@auth": "src/auth",
+      "@user": "dist/user",
+      "@utils": "src/utils"
+    }
   }
 }

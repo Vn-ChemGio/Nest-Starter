@@ -2,7 +2,7 @@ import { ConfigModule } from '@nestjs/config';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { HealthCheckModule } from './health-check';
-import { UserModule } from './user';
+import { UserModule } from '@user/';
 
 @Module({
   imports: [

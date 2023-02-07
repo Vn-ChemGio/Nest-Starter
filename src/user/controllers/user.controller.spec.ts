@@ -5,12 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserService } from '../services';
-import { UserController } from './user.controller';
 import {
   givenUserData,
   givenUserDataWithId,
-} from '../../utils/helpers/givenUserData';
+} from '@utils/helpers/givenUserData';
+import { UserService } from '../services';
+import { UserController } from './user.controller';
 
 describe('UserController', () => {
   let controller: UserController;

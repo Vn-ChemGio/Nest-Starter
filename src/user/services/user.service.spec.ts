@@ -1,11 +1,11 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { User } from '../entities';
-import { UserRepository } from '../repositories';
 import {
   givenUserData,
   givenUserDataWithId,
-} from '../../utils/helpers/givenUserData';
+} from '@utils/helpers/givenUserData';
+import { User } from '../entities';
+import { UserRepository } from '../repositories';
 import { UserService } from './user.service';
 
 describe('UserService', () => {
