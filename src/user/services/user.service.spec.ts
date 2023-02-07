@@ -1,9 +1,15 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
+  givenCredentialWithEmail,
   givenUserData,
   givenUserDataWithId,
-} from '@utils/helpers/givenUserData';
+} from '@utils/helpers';
+import * as bcrypt from 'bcrypt';
 import { User } from '../entities';
 import { UserRepository } from '../repositories';
 import { UserService } from './user.service';
@@ -184,6 +190,77 @@ describe('UserService', () => {
 
       expect(findByIdSpy).toHaveBeenCalled();
       expect(findByIdSpy).toBeCalledWith(sampleData._id, undefined, undefined);
+    });
+  });
+
+  describe('findByLogin', () => {
+    const sampleData = givenUserDataWithId();
+    const credentialWithEmail = givenCredentialWithEmail();
+
+    it('It should return an user if credential & password is valid in database', async () => {
+      const password = await bcrypt.hash(sampleData.password, 10);
+
+      const findByConditionSpy = jest
+        .spyOn(repository, 'findByCondition')
+        .mockResolvedValue({
+          _id: '123',
+          ...sampleData,
+          password: password,
+        } as User);
+
+      const result = await service.findByLogin(credentialWithEmail);
+
+      expect(findByConditionSpy).toHaveBeenCalled();
+      expect(findByConditionSpy).toBeCalledWith({
+        $or: [
+          { email: credentialWithEmail.credential },
+          { username: credentialWithEmail.credential },
+        ],
+      });
+
+      expect(result._id).toBeDefined();
+    });
+
+    it('It should return an error if credential does not exist in database', async () => {
+      const findByConditionSpy = jest
+        .spyOn(repository, 'findByCondition')
+        .mockResolvedValue(null);
+
+      await expect(service.findByLogin(credentialWithEmail)).rejects.toEqual(
+        new UnauthorizedException('User not found'),
+      );
+
+      expect(findByConditionSpy).toHaveBeenCalled();
+      expect(findByConditionSpy).toBeCalledWith({
+        $or: [
+          { email: credentialWithEmail.credential },
+          { username: credentialWithEmail.credential },
+        ],
+      });
+    });
+
+    it('It should return an user if email exists in database but password is invalid', async () => {
+      const password = await bcrypt.hash(sampleData.password + 'xxx', 10);
+
+      const findByConditionSpy = jest
+        .spyOn(repository, 'findByCondition')
+        .mockResolvedValue({
+          _id: '123',
+          ...sampleData,
+          password: password,
+        } as User);
+
+      await expect(service.findByLogin(credentialWithEmail)).rejects.toEqual(
+        new UnauthorizedException('Invalid credentials'),
+      );
+
+      expect(findByConditionSpy).toHaveBeenCalled();
+      expect(findByConditionSpy).toBeCalledWith({
+        $or: [
+          { email: credentialWithEmail.credential },
+          { username: credentialWithEmail.credential },
+        ],
+      });
     });
   });
 
