@@ -93,9 +93,9 @@
       ]
     },
     "_moduleAliases": {
-      "@auth": "src/auth",
+      "@auth": "dist/auth",
       "@user": "dist/user",
-      "@utils": "src/utils"
+      "@utils": "dist/utils"
     }
   }
 }

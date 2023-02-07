@@ -1,4 +1,4 @@
-import { User } from '../../user/entities';
+import { User } from '@user/entities';
 
 export const givenUserData = (data?: Partial<User>) =>
   Object.assign(

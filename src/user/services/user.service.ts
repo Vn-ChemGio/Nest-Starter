@@ -1,4 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { LoginUserDto } from '@auth/dto';
+import * as bcrypt from 'bcrypt';
 import {
   FilterQuery,
   ProjectionType,
@@ -44,6 +46,24 @@ export class UserService {
 
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    return user;
+  }
+
+  async findByLogin({ credential, password }: LoginUserDto) {
+    const user = await this.userRepository.findByCondition({
+      $or: [{ email: credential }, { username: credential }],
+    });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    const is_equal = bcrypt.compareSync(password, user.password);
+
+    if (!is_equal) {
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
 
     return user;

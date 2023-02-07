@@ -5,10 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  givenUserData,
-  givenUserDataWithId,
-} from '@utils/helpers/givenUserData';
+import { givenUserData, givenUserDataWithId } from '@utils/helpers';
 import { UserService } from '../services';
 import { UserController } from './user.controller';
 
