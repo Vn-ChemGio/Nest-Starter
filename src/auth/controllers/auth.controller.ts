@@ -1,4 +1,12 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { LoginUserDto, RegisterUserDto } from '@auth/dto';
 import { AuthService } from '@auth/services';
@@ -20,6 +28,31 @@ export class AuthController {
   @Post('refresh')
   async refresh(@Body() body) {
     return await this.authService.refresh(body.refresh_token);
+  }
+
+  @Post('generate')
+  @UseGuards(AuthGuard('jwt'))
+  async generate(@Res() response: any, @Req() request: any) {
+    const { otpAuthUrl } =
+      await this.authService.generateTwoFactorAuthenticationSecret(
+        request.user,
+      );
+
+    return this.authService.pipeQrCodeStream(response, otpAuthUrl);
+  }
+
+  @Post('authenticate')
+  @UseGuards(AuthGuard('jwt'))
+  async authentication(@Req() request: any, @Body('code') code) {
+    const isCodeValid =
+      await this.authService.isTwoFactorAuthenticationCodeValid(
+        code,
+        request.user,
+      );
+    if (!isCodeValid) {
+      throw new UnauthorizedException('Wrong authentication code');
+    }
+    return this.authService.getAccess2FA(request.user);
   }
 
   @UseGuards(AuthGuard('jwt'))
