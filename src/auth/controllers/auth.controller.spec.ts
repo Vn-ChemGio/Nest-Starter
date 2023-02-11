@@ -90,4 +90,47 @@ describe('AuthController', () => {
       expect(result.email).toEqual(sampleData.email);
     });
   });
+
+  describe('refresh', () => {
+    it('should return accessToken in response ', async () => {
+      const sampleData = {
+        email: 'abc@123.com',
+        password: 'xxxx',
+      };
+      const body = {
+        refresh_token: 'any_token',
+      };
+      const refreshSpy = jest.spyOn(authService, 'refresh').mockResolvedValue({
+        email: sampleData.email,
+        expiresIn: '30m',
+        accessToken: 'jwttoken',
+      });
+
+      const result = await controller.refresh(body);
+
+      expect(refreshSpy).toHaveBeenCalledWith(body.refresh_token);
+      expect(refreshSpy).toHaveBeenCalled();
+
+      expect(result.accessToken).toBeTruthy();
+      expect(result.expiresIn).toBeDefined();
+      expect(result.email).toEqual(sampleData.email);
+    });
+  });
+
+  describe('logout', () => {
+    it('should return statusCode in response ', async () => {
+      const req = { user: { email: 'abc@123.com' } };
+
+      const logoutSpy = jest
+        .spyOn(authService, 'logout')
+        .mockResolvedValue({} as any);
+
+      const result = await controller.logout(req);
+
+      expect(logoutSpy).toHaveBeenCalledWith(req.user);
+      expect(logoutSpy).toHaveBeenCalled();
+
+      expect(result.statusCode).toEqual(200);
+    });
+  });
 });
