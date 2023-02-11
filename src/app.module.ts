@@ -5,6 +5,7 @@ import { HealthCheckModule } from './health-check';
 import { UserModule } from '@user/';
 import { AuthModule } from '@auth/';
 import { MediaModule } from '@media/';
+import { MailModule } from '@mail/';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { MediaModule } from '@media/';
     UserModule,
     AuthModule,
     MediaModule,
+    MailModule,
   ],
 })
 export class AppModule {}

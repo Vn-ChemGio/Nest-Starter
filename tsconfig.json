@@ -21,6 +21,7 @@
       "@auth*":["src/auth*"],
       "@user*":["src/user*"],
       "@media*":["src/media*"],
+      "@mail*":["src/mail*"],
       "@utils*":["src/utils*"],
     }
   }
