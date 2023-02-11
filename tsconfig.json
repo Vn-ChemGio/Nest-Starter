@@ -20,6 +20,7 @@
     "paths": {
       "@auth*":["src/auth*"],
       "@user*":["src/user*"],
+      "@media*":["src/media*"],
       "@utils*":["src/utils*"],
     }
   }

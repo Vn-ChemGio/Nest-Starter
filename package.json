@@ -32,9 +32,11 @@
     "@nestjs/passport": "^9.0.1",
     "@nestjs/platform-fastify": "^9.3.3",
     "@nestjs/terminus": "^9.2.0",
+    "aws-sdk": "^2.1313.0",
     "bcrypt": "^5.1.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "fastify-multer": "^2.0.3",
     "mongoose": "^6.9.0",
     "otplib": "^12.0.1",
     "passport": "^0.6.0",
@@ -97,6 +99,7 @@
     "_moduleAliases": {
       "@auth": "dist/auth",
       "@user": "dist/user",
+      "@media": "dist/media",
       "@utils": "dist/utils"
     }
   }
