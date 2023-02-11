@@ -319,6 +319,50 @@ describe('UserService', () => {
     });
   });
 
+  describe('setTwoFactorAuthenticationSecret', () => {
+    const sampleData = {
+      _id: '123',
+      username: 'hantsy',
+      email: 'hantsy@example.com',
+      password: 'mysecret',
+    } as User;
+    const secret = 'any_secret';
+    it('It should be completed without error', async () => {
+      const findByIdAndUpdateSpy = jest
+        .spyOn(repository, 'findByIdAndUpdate')
+        .mockResolvedValue({ acknowledged: true, modifiedCount: 1 } as any);
+
+      await service.setTwoFactorAuthenticationSecret(secret, sampleData._id);
+
+      expect(findByIdAndUpdateSpy).toHaveBeenCalled();
+      expect(findByIdAndUpdateSpy).toBeCalledWith(sampleData._id, {
+        twoFactorAuthenticationSecret: secret,
+      });
+    });
+  });
+
+  describe('turnOnTwoFactorAuthentication', () => {
+    const sampleData = {
+      _id: '123',
+      username: 'hantsy',
+      email: 'hantsy@example.com',
+      password: 'mysecret',
+    } as User;
+
+    it('It should be completed without error', async () => {
+      const findByIdAndUpdateSpy = jest
+        .spyOn(repository, 'findByIdAndUpdate')
+        .mockResolvedValue({ acknowledged: true, modifiedCount: 1 } as any);
+
+      await service.turnOnTwoFactorAuthentication(sampleData._id);
+
+      expect(findByIdAndUpdateSpy).toHaveBeenCalled();
+      expect(findByIdAndUpdateSpy).toBeCalledWith(sampleData._id, {
+        isTwoFactorAuthenticationEnabled: true,
+      });
+    });
+  });
+
   describe('update', () => {
     const sampleResponse = {
       acknowledged: true,

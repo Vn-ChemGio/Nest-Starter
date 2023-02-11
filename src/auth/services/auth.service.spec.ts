@@ -30,6 +30,7 @@ describe('AuthService', () => {
             findByLogin: jest.fn(),
             findById: jest.fn(),
             getUserByRefresh: jest.fn(),
+            setTwoFactorAuthenticationSecret: jest.fn(),
             updateById: jest.fn(),
           },
         },
@@ -353,6 +354,92 @@ describe('AuthService', () => {
 
       expect(creatTokenSpy).not.toHaveBeenCalled();
       expect(updateUserSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getAccess2FA', () => {
+    const sampleData = {
+      _id: '123',
+      email: 'hantsy@example.com',
+      password: 'mysecret',
+    };
+
+    const token = 'any_token';
+
+    it('it should return an token without error', async () => {
+      const creatTokenSpy = jest
+        .spyOn(jwtService, 'sign')
+        .mockImplementation(() => token as never);
+
+      const updateUserSpy = jest
+        .spyOn(userService, 'updateById')
+        .mockResolvedValue({} as any);
+
+      const result = await authService.getAccess2FA(sampleData);
+
+      expect(creatTokenSpy).toBeCalledWith({
+        id: sampleData._id,
+        isSecondFactorAuthenticated: true,
+      });
+      expect(creatTokenSpy).toBeCalledWith(
+        { id: sampleData._id },
+        {
+          secret: process.env.SECRETKEY_REFRESH,
+          expiresIn: process.env.EXPIRESIN_REFRESH,
+        },
+      );
+
+      expect(creatTokenSpy).toBeCalledTimes(2);
+
+      expect(updateUserSpy).toBeCalledWith(sampleData._id, {
+        refreshToken: token,
+      });
+      expect(updateUserSpy).toBeCalledTimes(1);
+
+      expect(result.expiresIn).toBeDefined();
+      expect(result.accessToken).toBeDefined();
+      expect(result.expiresInRefresh).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
+    });
+  });
+
+  describe('generateTwoFactorAuthenticationSecret', () => {
+    it('it should return a result', async () => {
+      const updateUserSpy = jest
+        .spyOn(userService, 'setTwoFactorAuthenticationSecret')
+        .mockResolvedValue({} as any);
+
+      const sampleData = {
+        username: 'hantsy',
+        email: 'hantsy@example.com',
+        password: 'mysecret',
+      } as User;
+
+      const result = await authService.generateTwoFactorAuthenticationSecret(
+        sampleData,
+      );
+
+      expect(updateUserSpy).toBeCalledTimes(1);
+      expect(result.secret).toBeDefined();
+      expect(result.otpAuthUrl).toBeDefined();
+    });
+  });
+
+  describe('isTwoFactorAuthenticationCodeValid', () => {
+    it('it should return a result', async () => {
+      const sampleData = {
+        username: 'hantsy',
+        email: 'hantsy@example.com',
+        password: 'mysecret',
+        twoFactorAuthenticationSecret: 'secret',
+      } as User;
+
+      const result = await authService.isTwoFactorAuthenticationCodeValid(
+        '1111',
+        sampleData,
+      );
+
+      expect(result).toBeDefined();
     });
   });
 

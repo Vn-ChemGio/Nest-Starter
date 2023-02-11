@@ -1,3 +1,4 @@
+import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { User } from '@user/entities';
 import { LoginUserDto, RegisterUserDto } from '../dto';
@@ -18,6 +19,10 @@ describe('AuthController', () => {
             register: jest.fn(),
             login: jest.fn(),
             refresh: jest.fn(),
+            getAccess2FA: jest.fn(),
+            generateTwoFactorAuthenticationSecret: jest.fn(),
+            isTwoFactorAuthenticationCodeValid: jest.fn(),
+            pipeQrCodeStream: jest.fn(),
             logout: jest.fn(),
           },
         },
@@ -114,6 +119,82 @@ describe('AuthController', () => {
       expect(result.accessToken).toBeTruthy();
       expect(result.expiresIn).toBeDefined();
       expect(result.email).toEqual(sampleData.email);
+    });
+  });
+
+  describe('generate', () => {
+    it('should complete without error', async () => {
+      const req = { user: { email: 'abc@123.com', _id: '123' } };
+      const res = { user: { email: 'abc@123.com', _id: '123' } };
+
+      const data = { otpAuthUrl: 'any_url' };
+
+      const generateSpy = jest
+        .spyOn(authService, 'generateTwoFactorAuthenticationSecret')
+        .mockResolvedValue(data as any);
+      const pipeQrSpy = jest
+        .spyOn(authService, 'pipeQrCodeStream')
+        .mockResolvedValue({} as any);
+
+      await controller.generate(req, res);
+
+      expect(generateSpy).toHaveBeenCalledWith(req.user);
+      expect(generateSpy).toHaveBeenCalled();
+
+      expect(pipeQrSpy).toHaveBeenCalledWith(res, data.otpAuthUrl);
+      expect(pipeQrSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('authentication', () => {
+    it('should return data in response if code is valid ', async () => {
+      const req = { user: { email: 'abc@123.com', _id: '123' } };
+      const body = { code: '111' };
+      const validSpy = jest
+        .spyOn(authService, 'isTwoFactorAuthenticationCodeValid')
+        .mockResolvedValue(true as any);
+
+      const getAccess2FASpy = jest
+        .spyOn(authService, 'getAccess2FA')
+        .mockResolvedValue({
+          accessToken: 'any',
+          refreshToken: 'any',
+        } as any);
+
+      const result = await controller.authentication(req, body.code);
+
+      expect(validSpy).toHaveBeenCalledWith(body.code, req.user);
+      expect(validSpy).toHaveBeenCalled();
+
+      expect(getAccess2FASpy).toHaveBeenCalledWith(req.user);
+      expect(getAccess2FASpy).toHaveBeenCalled();
+
+      expect(result.accessToken).toBeTruthy();
+      expect(result.refreshToken).toBeTruthy();
+    });
+
+    it('should return an error if code is invalid ', async () => {
+      const req = { user: { email: 'abc@123.com', _id: '123' } };
+      const body = { code: '111' };
+      const validSpy = jest
+        .spyOn(authService, 'isTwoFactorAuthenticationCodeValid')
+        .mockResolvedValue(false as any);
+
+      const getAccess2FASpy = jest
+        .spyOn(authService, 'getAccess2FA')
+        .mockResolvedValue({
+          accessToken: 'any',
+          refreshToken: 'any',
+        } as any);
+
+      await expect(controller.authentication(req, body.code)).rejects.toEqual(
+        new UnauthorizedException('Wrong authentication code'),
+      );
+
+      expect(validSpy).toHaveBeenCalledWith(body.code, req.user);
+      expect(validSpy).toHaveBeenCalled();
+
+      expect(getAccess2FASpy).not.toHaveBeenCalled();
     });
   });
 
