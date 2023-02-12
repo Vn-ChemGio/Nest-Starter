@@ -107,13 +107,13 @@
       "^@util(.*)$": [
         "<rootDir>/src/util$1"
       ]
-    },
-    "_moduleAliases": {
-      "@auth": "dist/auth",
-      "@user": "dist/user",
-      "@media": "dist/media",
-      "@mail": "dist/mail",
-      "@utils": "dist/utils"
     }
+  },
+  "_moduleAliases": {
+    "@auth": "dist/auth",
+    "@user": "dist/user",
+    "@media": "dist/media",
+    "@mail": "dist/mail",
+    "@utils": "dist/utils"
   }
 }

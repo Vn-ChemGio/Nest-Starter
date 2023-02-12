@@ -6,7 +6,7 @@ export class MailController {
   constructor(private readonly mailService: MailService) {}
 
   @Post('/smtp-email-templates')
-  createEmailTemplate(@Body() emailTemplateDto: CreateEmailTemplateDto) {
+  async createEmailTemplate(@Body() emailTemplateDto: CreateEmailTemplateDto) {
     return this.mailService.createEmailTemplate(emailTemplateDto);
   }
 
