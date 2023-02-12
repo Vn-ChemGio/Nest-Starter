@@ -1,8 +1,11 @@
 import {
   BadRequestException,
+  HttpException,
+  HttpStatus,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { MailerService } from '@nest-modules/mailer';
 import {
   givenEmailTemplate,
   givenEmailTemplateWithId,
@@ -14,6 +17,8 @@ describe('MailService', () => {
   let service: MailService;
   let emailTemplateRepository: EmailTemplateRepository;
   let emailLogRepository: EmailLogRepository;
+  let mailerService: MailerService;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -24,12 +29,19 @@ describe('MailService', () => {
             create: jest.fn(),
             findByCondition: jest.fn(),
             findById: jest.fn(),
+            deleteOne: jest.fn(),
           },
         },
         {
           provide: EmailLogRepository,
           useValue: {
             create: jest.fn(),
+          },
+        },
+        {
+          provide: MailerService,
+          useValue: {
+            sendMail: jest.fn(),
           },
         },
       ],
@@ -40,6 +52,7 @@ describe('MailService', () => {
       EmailTemplateRepository,
     );
     emailLogRepository = module.get<EmailLogRepository>(EmailLogRepository);
+    mailerService = module.get<MailerService>(MailerService);
   });
 
   it('should be defined', () => {
@@ -137,6 +150,115 @@ describe('MailService', () => {
 
       expect(findByIdSpy).toBeCalledWith(sampleData._id);
       expect(findByIdSpy).toBeCalledTimes(1);
+    });
+  });
+
+  describe('removeEmailTemplateById', () => {
+    const sampleData = givenEmailTemplateWithId();
+    it('It should complete without error', async () => {
+      const deleteOneSpy = jest
+        .spyOn(emailTemplateRepository, 'deleteOne')
+        .mockReturnValue({
+          acknowledged: true,
+          modifiedCount: 1,
+        } as any);
+
+      const response = await service.removeEmailTemplateById(sampleData._id);
+
+      expect(deleteOneSpy).toHaveBeenCalledWith(sampleData._id);
+      expect(deleteOneSpy).toHaveBeenCalled();
+      expect(response).toBeTruthy();
+    });
+  });
+
+  describe('sendSMTPEmailFromDb', () => {
+    const emailTemplate = givenEmailTemplateWithId();
+
+    const target = 'target@abc.com';
+    const data = {};
+    it('should return completed if everything is correctly', async () => {
+      const findEmailTemplateByIdSpy = jest
+        .spyOn(emailTemplateRepository, 'findById')
+        .mockResolvedValue(emailTemplate as any);
+
+      const sendEmailSpy = jest
+        .spyOn(mailerService, 'sendMail')
+        .mockResolvedValue({} as any);
+
+      const saveLogSpy = jest
+        .spyOn(emailLogRepository, 'create')
+        .mockResolvedValue({} as any);
+
+      const result = await service.sendSMTPEmailFromDb(
+        emailTemplate._id,
+        target,
+        data,
+      );
+
+      expect(findEmailTemplateByIdSpy).toHaveBeenCalled();
+      expect(findEmailTemplateByIdSpy).toHaveBeenCalledWith(emailTemplate._id);
+
+      expect(sendEmailSpy).toHaveBeenCalled();
+      expect(sendEmailSpy).toHaveBeenCalledWith({
+        to: target,
+        from: emailTemplate.from,
+        subject: emailTemplate.subject,
+        html: emailTemplate.content,
+        context: data,
+      });
+
+      expect(saveLogSpy).toHaveBeenCalled();
+      expect(saveLogSpy).toHaveBeenCalledWith({
+        to: target,
+        from: emailTemplate.from,
+        subject: emailTemplate.subject,
+        content: emailTemplate.content,
+        status: 'true',
+      });
+
+      expect(result).toBeDefined();
+    });
+
+    it('should return an error if data is invalid', async () => {
+      const findEmailTemplateByIdSpy = jest
+        .spyOn(emailTemplateRepository, 'findById')
+        .mockImplementation(() => {
+          throw new HttpException('any_error', HttpStatus.BAD_REQUEST);
+        });
+
+      await expect(
+        service.sendSMTPEmailFromDb(emailTemplate._id, 'any_email', undefined),
+      ).rejects.toEqual(new BadRequestException('any_error'));
+
+      expect(findEmailTemplateByIdSpy).toHaveBeenCalledWith(emailTemplate._id);
+      expect(findEmailTemplateByIdSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('sendSMTPEmailFromTemplate', () => {
+    const emailTemplate = givenEmailTemplateWithId();
+    const target = 'target@abc.com';
+    const data = {};
+    it('should return completed if everything is correctly', async () => {
+      const sendEmailSpy = jest
+        .spyOn(mailerService, 'sendMail')
+        .mockResolvedValue({} as any);
+
+      const result = await service.sendSMTPEmailFromTemplate(
+        'welcome',
+        target,
+        emailTemplate.subject,
+        data,
+      );
+
+      expect(sendEmailSpy).toHaveBeenCalledWith({
+        to: target,
+        subject: emailTemplate.subject,
+        template: `./welcome`,
+        context: data,
+      });
+      expect(sendEmailSpy).toHaveBeenCalled();
+      expect(result).toBeDefined();
     });
   });
 
