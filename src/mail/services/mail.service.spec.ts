@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MailerService } from '@nest-modules/mailer';
+import { MailService as SendGridService } from '@sendgrid/mail';
 import {
   givenEmailTemplate,
   givenEmailTemplateWithId,
@@ -13,11 +14,13 @@ import {
 import { EmailLogRepository, EmailTemplateRepository } from '../repositories';
 import { MailService } from './mail.service';
 
+const SENDGRID_MAIL = 'SENDGRID_MAIL';
 describe('MailService', () => {
   let service: MailService;
   let emailTemplateRepository: EmailTemplateRepository;
   let emailLogRepository: EmailLogRepository;
   let mailerService: MailerService;
+  let sendGridService: SendGridService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -44,6 +47,12 @@ describe('MailService', () => {
             sendMail: jest.fn(),
           },
         },
+        {
+          provide: SENDGRID_MAIL,
+          useValue: {
+            send: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -53,6 +62,7 @@ describe('MailService', () => {
     );
     emailLogRepository = module.get<EmailLogRepository>(EmailLogRepository);
     mailerService = module.get<MailerService>(MailerService);
+    sendGridService = module.get<SendGridService>(SENDGRID_MAIL);
   });
 
   it('should be defined', () => {
@@ -286,6 +296,26 @@ describe('MailService', () => {
       expect(result._id).toBeDefined();
 
       expect(service).toBeDefined();
+    });
+  });
+
+  describe('sendGridSendEmail', () => {
+    it('should call SendGridService.send', async () => {
+      const msg = {
+        to: 'test@example.com',
+        from: 'test@example.com', // Use the email address or domain you verified above
+        subject: 'Sending with Twilio SendGrid is Fun',
+        text: 'and easy to do anywhere, even with Node.js',
+        html: '<strong>and easy to do anywhere, even with Node.js</strong>',
+      };
+
+      const sendSpy = jest
+        .spyOn(sendGridService, 'send')
+        .mockResolvedValue({} as any);
+
+      await service.sendGridSendEmail(msg).toPromise();
+      expect(sendSpy).toHaveBeenCalled();
+      expect(sendSpy).toBeCalledWith(msg, false);
     });
   });
 });
