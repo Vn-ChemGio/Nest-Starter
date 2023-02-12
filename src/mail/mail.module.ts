@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { HandlebarsAdapter, MailerModule } from '@nest-modules/mailer';
 import { join } from 'path';
+import { sendgridConfig } from './configs';
 import { MailController } from './controllers';
 import { EmailLogSchema, EmailTemplateSchema } from './entities';
 import { MailService } from './services';
@@ -48,6 +49,7 @@ import { EmailLogRepository, EmailTemplateRepository } from './repositories';
       }),
       inject: [ConfigService],
     }),
+    ConfigModule.forFeature(sendgridConfig),
   ],
   controllers: [MailController],
   providers: [EmailTemplateRepository, EmailLogRepository, MailService],

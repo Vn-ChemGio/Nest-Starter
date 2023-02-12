@@ -1,10 +1,16 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { MailerService } from '@nest-modules/mailer';
+import {
+  MailDataRequired,
+  MailService as SendGridService,
+} from '@sendgrid/mail';
+import { from, Observable } from 'rxjs';
 import { EmailLogRepository, EmailTemplateRepository } from '../repositories';
 import { CreateEmailTemplateDto } from '../dto';
 
@@ -14,6 +20,7 @@ export class MailService {
     private readonly emailTemplateRepository: EmailTemplateRepository,
     private readonly emailLogRepository: EmailLogRepository,
     private readonly mailerService: MailerService,
+    @Inject('SENDGRID_MAIL') private sendGridService: SendGridService,
   ) {}
 
   public async createEmailTemplate(data: CreateEmailTemplateDto) {
@@ -103,5 +110,10 @@ export class MailService {
       content: data.content,
       status: data.status,
     });
+  }
+
+  sendGridSendEmail(data: MailDataRequired): Observable<any> {
+    //console.log(this.mailService)
+    return from(this.sendGridService.send(data, false));
   }
 }
