@@ -4,6 +4,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { MailerService } from '@nest-modules/mailer';
 import { EmailLogRepository, EmailTemplateRepository } from '../repositories';
 import { CreateEmailTemplateDto } from '../dto';
 
@@ -12,6 +13,7 @@ export class MailService {
   constructor(
     private readonly emailTemplateRepository: EmailTemplateRepository,
     private readonly emailLogRepository: EmailLogRepository,
+    private readonly mailerService: MailerService,
   ) {}
 
   public async createEmailTemplate(data: CreateEmailTemplateDto) {
@@ -39,6 +41,58 @@ export class MailService {
       throw new InternalServerErrorException('Invalid Template Data');
 
     return emailTemplate;
+  }
+
+  public async removeEmailTemplateById(templateId: string) {
+    return this.emailTemplateRepository.deleteOne(templateId);
+  }
+
+  public async sendSMTPEmailFromDb(
+    templateId: string,
+    toEmail: string,
+    data: any,
+  ) {
+    const emailTemplate = await this.findEmailTemplateById(templateId);
+
+    //TODO: Render email by data and template adapter
+    const response = await this.mailerService.sendMail({
+      to: toEmail,
+      from: emailTemplate.from,
+      subject: emailTemplate.subject,
+      html: emailTemplate.content,
+      context: data,
+    });
+
+    await this.saveLogSentMail({
+      to: toEmail,
+      from: emailTemplate.from,
+      subject: emailTemplate.subject,
+      content: emailTemplate.content,
+      status: 'true',
+    });
+
+    return response;
+  }
+
+  /**
+   *
+   * @param templateName: a filename had been defined in directory '/src/mail/template'. Ex:'welcome'
+   * @param toEmail
+   * @param subject
+   * @param data
+   */
+  public sendSMTPEmailFromTemplate(
+    templateName: string,
+    toEmail: string,
+    subject: string,
+    data: any,
+  ) {
+    return this.mailerService.sendMail({
+      to: toEmail,
+      subject: subject,
+      template: `./${templateName}`,
+      context: data,
+    });
   }
 
   public async saveLogSentMail(data: any) {
