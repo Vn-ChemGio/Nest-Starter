@@ -246,7 +246,7 @@ describe('BaseRepository', () => {
       .mockResolvedValue({ acknowledged: true, modifiedCount: 1 });
 
     await repository.findByIdAndUpdate(sampleData._id, {});
-    expect(findByIdAndUpdateSpy).toBeCalledWith(sampleData._id, {});
+    expect(findByIdAndUpdateSpy).toBeCalledWith(sampleData._id, {}, undefined);
     expect(findByIdAndUpdateSpy).toBeCalledTimes(1);
   });
 

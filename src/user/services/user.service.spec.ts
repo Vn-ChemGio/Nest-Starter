@@ -10,6 +10,7 @@ import {
   givenUserDataWithId,
 } from '@utils/helpers';
 import * as bcrypt from 'bcrypt';
+import { UpdateUserPasswordDto } from '../dto';
 import { User } from '../entities';
 import { UserRepository } from '../repositories';
 import { UserService } from './user.service';
@@ -408,7 +409,62 @@ describe('UserService', () => {
       const update = {};
       await service.updateById(sampleData._id, update);
 
-      expect(findByIdAndUpdateSpy).toBeCalledWith(sampleData._id, update);
+      expect(findByIdAndUpdateSpy).toBeCalledWith(
+        sampleData._id,
+        update,
+        undefined,
+      );
+    });
+  });
+
+  describe('changeUserPassword', () => {
+    const sampleBody: UpdateUserPasswordDto = {
+      password: 'any_password',
+      newPassword: 'any_secret',
+      newPasswordConfirm: 'any_secret',
+    };
+    const sampleData = givenUserDataWithId();
+
+    it('It should return an error if userId not found', async () => {
+      const findByIdSpy = jest
+        .spyOn(repository, 'findById')
+        .mockResolvedValue(null as any);
+
+      await expect(
+        service.changeUserPassword(sampleData._id, sampleBody),
+      ).rejects.toEqual(new NotFoundException('User not found'));
+
+      expect(findByIdSpy).toBeCalled();
+      expect(findByIdSpy).toBeCalledWith(sampleData._id);
+    });
+
+    it('It should return an error if current password is invalid', async () => {
+      const findByIdSpy = jest.spyOn(repository, 'findById').mockResolvedValue({
+        ...sampleData,
+        password: 'any_invalid_hash',
+      } as any);
+
+      await expect(
+        service.changeUserPassword(sampleData._id, sampleBody),
+      ).rejects.toEqual(new BadRequestException('Invalid credentials'));
+
+      expect(findByIdSpy).toBeCalled();
+      expect(findByIdSpy).toBeCalledWith(sampleData._id);
+    });
+
+    it('It should update the user and return userdata if user send valid password', async () => {
+      const findByIdSpy = jest.spyOn(repository, 'findById').mockResolvedValue({
+        ...sampleData,
+        password: await bcrypt.hash(sampleBody.password, 10),
+        save: jest.fn().mockResolvedValue({
+          ...sampleData,
+        }),
+      } as any);
+
+      await service.changeUserPassword(sampleData._id, sampleBody);
+
+      expect(findByIdSpy).toBeCalled();
+      expect(findByIdSpy).toBeCalledWith(sampleData._id);
     });
   });
 
