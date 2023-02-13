@@ -6,6 +6,7 @@ import { join } from 'path';
 import { sendgridConfig } from './configs';
 import { MailController } from './controllers';
 import { EmailLogSchema, EmailTemplateSchema } from './entities';
+import { sendgridProviders } from './providers';
 import { MailService } from './services';
 import { EmailLogRepository, EmailTemplateRepository } from './repositories';
 
@@ -52,7 +53,12 @@ import { EmailLogRepository, EmailTemplateRepository } from './repositories';
     ConfigModule.forFeature(sendgridConfig),
   ],
   controllers: [MailController],
-  providers: [EmailTemplateRepository, EmailLogRepository, MailService],
+  providers: [
+    EmailTemplateRepository,
+    EmailLogRepository,
+    MailService,
+    ...sendgridProviders,
+  ],
   exports: [MailService],
 })
 export class MailModule {}
