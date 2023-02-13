@@ -100,10 +100,10 @@
         "<rootDir>/src/user$1"
       ],
       "^@media(.*)$": [
-        "<rootDir>/src/media"
+        "<rootDir>/src/media$1"
       ],
       "^@mail(.*)$": [
-        "<rootDir>/src/mail"
+        "<rootDir>/src/mail$1"
       ],
       "^@util(.*)$": [
         "<rootDir>/src/util$1"

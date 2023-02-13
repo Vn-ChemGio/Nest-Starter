@@ -6,8 +6,9 @@ const UserSchema = new Schema(
     username: String,
     email: String,
     password: String,
-    firstName: String,
-    lastName: String,
+    firstName: { type: String, default: null },
+    lastName: { type: String, default: null },
+    avatar: { type: Schema.Types.ObjectId, ref: 'Media', default: null },
     refreshToken: String,
     twoFactorAuthenticationSecret: String,
     isTwoFactorAuthenticationEnabled: { type: Boolean, default: false },
@@ -28,6 +29,7 @@ export interface User extends Document {
   password: string;
   firstName: string;
   lastName: string;
+  avatar: string;
   twoFactorAuthenticationSecret: string;
   isTwoFactorAuthenticationEnabled: boolean;
   refreshToken: string;

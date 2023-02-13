@@ -73,7 +73,11 @@ export class BaseRepository<T extends Document> {
     return this.model.updateMany(filter, update, option, callback);
   }
 
-  async findByIdAndUpdate(id?: any, update?: UpdateQuery<T>) {
-    return this.model.findByIdAndUpdate(id, update);
+  async findByIdAndUpdate(
+    id?: any,
+    update?: UpdateQuery<T>,
+    options?: QueryOptions<T>,
+  ) {
+    return this.model.findByIdAndUpdate(id, update, options);
   }
 }

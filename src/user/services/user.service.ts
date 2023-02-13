@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { LoginUserDto } from '@auth/dto';
 import * as bcrypt from 'bcrypt';
 import {
@@ -7,7 +13,7 @@ import {
   QueryOptions,
   UpdateQuery,
 } from 'mongoose';
-import { CreateUserDto } from '../dto';
+import { CreateUserDto, UpdateUserPasswordDto } from '../dto';
 import { UserRepository } from '../repositories';
 import { User } from '../entities';
 
@@ -106,8 +112,35 @@ export class UserService {
     return this.userRepository.updateMany(filter, update, option);
   }
 
-  updateById(id: string, update: UpdateQuery<User>) {
-    return this.userRepository.findByIdAndUpdate(id, update);
+  updateById(
+    id: string,
+    update: UpdateQuery<User>,
+    options?: QueryOptions<User>,
+  ) {
+    return this.userRepository.findByIdAndUpdate(id, update, options);
+  }
+
+  async changeUserPassword(
+    id: string,
+    updateUserPasswordDto: UpdateUserPasswordDto,
+  ) {
+    const user = await this.userRepository.findById(id);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const is_equal = bcrypt.compareSync(
+      updateUserPasswordDto.password,
+      user.password,
+    );
+
+    if (!is_equal) {
+      throw new BadRequestException('Invalid credentials');
+    }
+
+    user.password = updateUserPasswordDto.newPassword;
+    return user.save();
   }
 
   removeById(id: string) {
