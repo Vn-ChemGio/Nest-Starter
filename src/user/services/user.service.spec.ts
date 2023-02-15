@@ -401,6 +401,90 @@ describe('UserService', () => {
     const sampleData = givenUserDataWithId();
     const sampleResponse = { acknowledged: true, modifiedCount: 1 };
 
+    it('It should clean data (lowercase email if exist) update before process', async () => {
+      const findByIdAndUpdateSpy = jest
+        .spyOn(repository, 'findByIdAndUpdate')
+        .mockResolvedValue(sampleResponse as any);
+
+      const update = {
+        email: sampleData.email.toUpperCase(),
+      };
+      await service.updateById(sampleData._id, update);
+
+      expect(findByIdAndUpdateSpy).toBeCalledWith(
+        sampleData._id,
+        { email: sampleData.email },
+        undefined,
+      );
+    });
+
+    it('It should clean data (lowercase username if exist) update before process', async () => {
+      const findByIdAndUpdateSpy = jest
+        .spyOn(repository, 'findByIdAndUpdate')
+        .mockResolvedValue(sampleResponse as any);
+
+      const update = {
+        username: sampleData.username.toUpperCase(),
+      };
+      await service.updateById(sampleData._id, update);
+
+      expect(findByIdAndUpdateSpy).toBeCalledWith(
+        sampleData._id,
+        { username: sampleData.username },
+        undefined,
+      );
+    });
+
+    it('It should clean data (hash password if exist) update before process', async () => {
+      const findByIdAndUpdateSpy = jest
+        .spyOn(repository, 'findByIdAndUpdate')
+        .mockResolvedValue(sampleResponse as any);
+
+      const update = {
+        password: sampleData.password,
+      };
+      await service.updateById(sampleData._id, update);
+
+      expect(findByIdAndUpdateSpy).toBeCalledWith(
+        sampleData._id,
+        //{ password: expect.any(String) },
+        { password: expect.any(String) },
+        undefined,
+      );
+    });
+
+    it('It should clean data (hash refreshToken if exist) update before process', async () => {
+      const findByIdAndUpdateSpy = jest
+        .spyOn(repository, 'findByIdAndUpdate')
+        .mockResolvedValue(sampleResponse as any);
+
+      const update = {
+        refreshToken: sampleData.refreshToken,
+      };
+      await service.updateById(sampleData._id, update);
+
+      expect(findByIdAndUpdateSpy).toBeCalledWith(
+        sampleData._id,
+        //{ password: expect.any(String) },
+        { refreshToken: expect.any(String) },
+        undefined,
+      );
+    });
+
+    it('It should call to findByIdAndUpdate to get the data and will not return errors', async () => {
+      const findByIdAndUpdateSpy = jest
+        .spyOn(repository, 'findByIdAndUpdate')
+        .mockResolvedValue(sampleResponse as any);
+
+      const update = {};
+      await service.updateById(sampleData._id, update);
+
+      expect(findByIdAndUpdateSpy).toBeCalledWith(
+        sampleData._id,
+        update,
+        undefined,
+      );
+    });
     it('It should call to findByIdAndUpdate to get the data and will not return errors', async () => {
       const findByIdAndUpdateSpy = jest
         .spyOn(repository, 'findByIdAndUpdate')

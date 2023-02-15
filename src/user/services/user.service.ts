@@ -112,11 +112,28 @@ export class UserService {
     return this.userRepository.updateMany(filter, update, option);
   }
 
-  updateById(
+  async updateById(
     id: string,
     update: UpdateQuery<User>,
     options?: QueryOptions<User>,
   ) {
+    if (update.password) {
+      update.password = await bcrypt.hash(update.password, 10);
+    }
+    if (update.refreshToken) {
+      update.refreshToken = await bcrypt.hash(
+        this.reverse(update.refreshToken),
+        10,
+      );
+    }
+    if (update.email) {
+      update.email = update.email.toLowerCase();
+    }
+
+    if (update.username) {
+      update.username = update.username.toLowerCase();
+    }
+
     return this.userRepository.findByIdAndUpdate(id, update, options);
   }
 
